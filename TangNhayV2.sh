@@ -1,4 +1,31 @@
 #!/system/bin/sh
+os=$(getprop ro.product.build.version.incremental)
+uptime=$(uptime -p | sed 's/^up //' | awk -F', ' '
+{
+  out=""
+  for (i=1;i<=NF;i++) {
+    if ($i !~ /^0 (weeks|days)$/ && $i ~ /(weeks|days|hours|minutes)/) {
+      out = (out=="" ? $i : out", "$i)
+    }
+  }
+  print out
+}')
+package=$(pm list packages | wc -l)
+disk=$(df -k /storage/emulated | awk 'NR==2 {printf "%.2fG / %.2fG\n", $3/1024/1024, $2/1024/1024}')
+diskusage=$(df /storage/emulated | awk 'NR==2 {print $5}')
+disksystem=$(df / | awk 'NR==2 {printf "%.2f MiB / %.2f MiB (%s)\n", $3/1024, $2/1024, $5}')
+memory=$(free -m | awk 'NR==2 {printf "%.2f GiB / %.2f GiB (%d%%)\n", $3/1024, $2/1024, ($3*100)/$2}')
+swap=$(free -m | awk '
+$1=="Swap:" {
+  used=$3; total=$2;
+  if (total > 0)
+    printf "%.2f GiB / %.2f GiB (%d%%)\n", used/1024, total/1024, (used*100)/total
+  else
+    print "OFF"
+}')
+gpu=$(dumpsys SurfaceFlinger \
+| awk -F'GLES: ' '/GLES:/ {print $2}' \
+| awk -F', OpenGL' '{print $1}')
 
 soc=$(getprop ro.soc.model)
 [ -z "$soc" ] && soc=$(grep -i "Hardware" /proc/cpuinfo | awk '{print $NF}')
@@ -62,6 +89,26 @@ if [ -n "$freq" ]; then
   freq="@ $freq GHz"
 else
   freq=""
-fi
+fi 
 
-echo "CPU: $vendor $name [$soc] ($cores) $freq"
+echo "         -o          o-             u0_a$(id -u)@localhost
+          +hydNNNNdyh+              -----------------
+        +mMMMMMMMMMMMMm+          OS: $os
+      dMMm:NMMMMMMN:mMMd          Host: $(getprop ro.product.vendor_dlkm.manufacturer) $(getprop ro.product.marketname) ($(getprop ro.product.model))
+      hMMMMMMMMMMMMMMMMMMh        Kernel: Linux $(uname -r)
+  ..  yyyyyyyyyyyyyyyyyyyy  ..    Uptime: $uptime
+.mMMmMMMMMMMMMMMMMMMMMMMMmMMm.    Packages: $package (pm)
+:MMMM-MMMMMMMMMMMMMMMMMMMM-MMMM:  Shell: $0
+:MMMM-MMMMMMMMMMMMMMMMMMMM-MMMM:  CPU: $vendor $name [$soc] ($cores) $freq
+:MMMM-MMMMMMMMMMMMMMMMMMMM-MMMM:  GPU: $gpu
+:MMMM-MMMMMMMMMMMMMMMMMMMM-MMMM:  Memory: $memory
+-MMMM-MMMMMMMMMMMMMMMMMMMM-MMMM-  Swap: $swap
+ +yy+ MMMMMMMMMMMMMMMMMMMM +yy+   Disk (/): $disksystem
+      mMMMMMMMMMMMMMMMMMMm        Disk (/storage/emulated): $disk ($diskusage)
+      /++MMMMh++hMMMM++/          Local IP (rmnet_data1): $(ip -o -4 addr show | awk '/rmnet_data/ {print $4}')
+          MMMMo  oMMMM            Local IP (wlan0): $(ip -o -4 addr show wlan0 | awk '{print $4}')
+          MMMMo  oMMMM            Locale: $(settings get system system_locales)
+          oNMm-  -mMNs            
+                                  
+                                  
+"                                  
