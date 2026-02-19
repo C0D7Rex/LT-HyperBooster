@@ -1,14 +1,14 @@
 [
 {
-module: "Tang Nhay"
+module: "Tang Nhay",
 pricey: "100",
-version: "1.0"
+version: "1.0",
 link: "https://raw.githubusercontent.com/C0D7Rex/LT-HyperBooster/refs/heads/main/TangNhay.sh"
 },
 {
-module: "Tang Nhay"
+module: "Tang Nhay",
 pricey: "150",
-version: "2.0"
+version: "2.0",
 link: "https://raw.githubusercontent.com/C0D7Rex/LT-HyperBooster/refs/heads/main/TangNhayV2.sh"
 }
 ]
